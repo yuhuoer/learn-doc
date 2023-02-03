@@ -1,5 +1,21 @@
 [toc]
+<!-- TOC -->
 
+- [Java基础](#java%E5%9F%BA%E7%A1%80)
+    - [常用dos命令](#%E5%B8%B8%E7%94%A8dos%E5%91%BD%E4%BB%A4)
+    - [Java语言特点](#java%E8%AF%AD%E8%A8%80%E7%89%B9%E7%82%B9)
+    - [Java语法](#java%E8%AF%AD%E6%B3%95)
+        - [关键字和保留字](#%E5%85%B3%E9%94%AE%E5%AD%97%E5%92%8C%E4%BF%9D%E7%95%99%E5%AD%97)
+        - [java数据类型](#java%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B)
+        - [java数据类型转换](#java%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2)
+        - [java算术运算符](#java%E7%AE%97%E6%9C%AF%E8%BF%90%E7%AE%97%E7%AC%A6)
+        - [java语句](#java%E8%AF%AD%E5%8F%A5)
+        - [字符串](#%E5%AD%97%E7%AC%A6%E4%B8%B2)
+        - [正则表达式](#%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F)
+        - [Pattern类和Matcher类](#pattern%E7%B1%BB%E5%92%8Cmatcher%E7%B1%BB)
+    - [java数字和日期的处理](#java%E6%95%B0%E5%AD%97%E5%92%8C%E6%97%A5%E6%9C%9F%E7%9A%84%E5%A4%84%E7%90%86)
+
+<!-- /TOC -->
 ## Java基础
 
 ### 常用dos命令
@@ -48,7 +64,7 @@ JDK(Java Development Kit  Java开发工具包)
 
 JRE(Java Runtime Environment Java运行环境)
 
-![image-20230111231702815](./pictures/image-20230111231647697.png)
+![image-20230111231647697](./pictures/image-20230111231647697.png)
 
 ![Java8.0_platform](./pictures/Java8.0_platform.jpg)
 
@@ -66,7 +82,7 @@ javadoc -d "文件夹名" -author "作者" -version "版本" 文件名
 
 一个java源文件中可以声明多个类，但只能有一个可以声明为public。声明为pubic的类的类名必须与源文件名相同。
 
-**Java命名规范 **
+**Java命名规范**
 
 ​		包名：多单词组成时所有字母都小写，如xxxyyyzzz
 
@@ -664,7 +680,7 @@ StringBuffer对象.reverse();
 
 **正则表达式规则**
 
-1. 字母、数字、汉字、下划线、以及没有特殊定义的标点符号，都是 "普通字符"。表达式中的普通字符，在匹配一个字符串的时候，匹配与之相同的一个字符。
+1. 字母、数字、汉字、下划线、以及没有特殊定义的标点符号，都是 "普通字符"。表达式中的普通字符，在匹配一个字符串的时候，匹配与之相同的一个字符。虽然可以匹配其中任意一个，但是**只能是一个，不是多个**。
 ![v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r](.\pictures\v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r.jpg)
 
 2. 一些不便书写的字符，采用在前面加 "\" 的方法。
@@ -681,7 +697,7 @@ StringBuffer对象.reverse();
 
 4. **自定义能够匹配 '多种字符' 的表达式**
 
-使用方括号 [ ] 包含一系列字符，能够匹配其中**任意**一个字符。用 ^ 包含一系列字符，则能够匹配其中字符之外的任意一个字符。同样的道理，虽然可以匹配其中任意一个，但是只能是一个，不是多个。
+使用方括号 [ ] 包含一系列字符，能够匹配其中**任意**一个字符。用[ ^ ]包含一系列字符，则能够匹配其中字符之外的任意一个字符。同样的道理，虽然可以匹配其中任意一个，但是只能是一个，不是多个。
 
 ![v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r](.\pictures\v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r.jpg)
 
@@ -691,4 +707,93 @@ StringBuffer对象.reverse();
 
 <img src=".\pictures\v2-c0c00df9f72082beba5ce919db4c8d57_r.jpg" alt="v2-c0c00df9f72082beba5ce919db4c8d57_r" style="zoom: 80%;" />
 
- https://zhuanlan.zhihu.com/p/235110704
+6. **代表抽象意义的特殊符号**  
+一些符号在表达式中代表抽象的特殊意义：
+![v2-e82dc4b831a7df20e043d85739cfc075_r](.\pictures\v2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
+![v2-3233067b80f2e3810850e9fdee5529dd_r](.\pictures\v2-3233067b80f2e3810850e9fdee5529dd_r.png)
+
+
+**正则表达式工具** https://jex.im/regulex/#!flags=i&re=%5BABC%5D
+
+#### Pattern类和Matcher类
+java.util.regex 是一个用正则表达式所订制的模式来对字符串进行匹配工作的类库包。它包括两个类：Pattern 和 Matcher。
+
+Pattern 对象是正则表达式编译后在内存中的表示形式，因此，正则表达式字符串必须先被编译为 Pattern 对象，然后再利用该 Pattern 对象创建对应的 Matcher 对象。执行匹配所涉及的状态保留在 Matcher 对象中，多个 Matcher 对象可共享同一个 Pattern 对象。
+```java
+// 将一个字符串编译成 Pattern 对象
+Pattern p = Pattern.compile("a*b");
+// 使用 Pattern 对象创建 Matcher 对象
+Matcher m = p.matcher("aaaaab");
+boolean b = m.matches(); // 返回 true
+```
+上面定义的 Pattern 对象可以多次重复使用。如果某个正则表达式仅需一次使用，则可直接使用 Pattern 类的静态 matches() 方法，此方法自动把指定字符串编译成匿名的 Pattern 对象，并执行匹配，如下所示。
+```java
+boolean b = Pattern.matches ("a*b","aaaaab");    // 返回 true
+```
+Pattern 是不可变类，可供多个并发线程安全使用。
+
+
+|名称	|说明|
+|:------:|:-------:|
+|find()	|返回目标字符串中是否包含与 Pattern 匹配的子串|
+|group()	|返回上一次与 Pattern 匹配的子串|
+|start()	|返回上一次与 Pattern 匹配的子串在目标字符串中的开始位置|
+|end()	|返回上一次与 Pattern 匹配的子串在目标字符串中的结束位置加 1|
+|lookingAt()	|返回目标字符串前面部分与 Pattern 是否匹配,从第一个字符开始|
+|matches()|	返回整个目标字符串与 Pattern 是否匹配|
+|reset()	|将现有的 Matcher 对象应用于一个新的字符序列。|
+
+### java数字和日期的处理
+
+Math类位于java的lang包。
+1. Math类常用方法
+**静态常量**：E(自然对数 Math.E)和PI(圆周率 Math.PI)
+
+**求最大值、最小值和绝对值**
+|方法	|说明|
+|:-----:|:------:|
+|static int abs(int a)|	返回 a 的绝对值|
+|static long abs(long a)|	返回 a 的绝对值|
+|static float abs(float a)|返回 a 的绝对值|
+|static double abs(double a)	|返回 a 的绝对值|
+|static int max(int x,int y)	|返回 x 和 y 中的最大值|
+|static double max(double x,double y)	|返回 x 和 y 中的最大值|
+|static long max(long x,long y)	|返回 x 和 y 中的最大值|
+|static float max(float x,float y)	|返回 x 和 y 中的最大值|
+|static int min(int x,int y)	|返回 x 和 y 中的最小值|
+|static long min(long x,long y)	|返回 x 和 y 中的最小值|
+|static double min(double x,double y)	|返回 x 和 y 中的最小值|
+|static float min(float x,float y)	|返回 x 和 y 中的最小值|
+
+**求整运算**
+|方法	|说明|
+|:-----:|:------:|
+|static double ceil(double a)	|返回大于或等于 a 的最小整数 向上取整|
+|static double floor(double a)	|返回小于或等于 a 的最大整数 向下取整|
+|static double rint(double a)	|返回最接近 a 的整数值，如果有两个同样接近的整数，则结果取偶数|
+|static int round(float a)	|将参数加上 1/2 后返回与参数最近的整数|
+|static long round(double a)	|将参数加上 1/2 后返回与参数最近的整数，然后强制转换为长整型|
+
+**三角函数**
+
+|方法	|说明|
+|:-----:|:------:|
+|static double sin(double a)	|返回角的三角正弦值，参数以孤度为单位|
+|static double cos(double a)	|返回角的三角余弦值，参数以孤度为单位|
+|static double asin(double a)	|返回一个值的反正弦值，参数域在 [-1,1]，值域在 [-PI/2,PI/2]|
+|static double acos(double a)	|返回一个值的反余弦值，参数域在 [-1,1]，值域在 [0.0,PI]|
+|static double tan(double a)	|返回角的三角正切值，参数以弧度为单位|
+|static double atan(double a)	|返回一个值的反正切值，值域在 [-PI/2,PI/2]|
+|static double toDegrees(double angrad)	|将用孤度表示的角转换为近似相等的用角度表示的角|
+|staticdouble toRadians(double angdeg)	|将用角度表示的角转换为近似相等的用弧度表示的角|
+
+**指数运算**
+|方法	|说明|
+|:-----:|:------:|
+|static double exp(double a)	|返回 e 的 a 次幂|
+|static double pow(double a,double b)|	返回以 a 为底数，以 b 为指数的幂值|
+|static double sqrt(double a)	|返回 a 的平方根|
+|static double cbrt(double a)|	返回 a 的立方根|
+|static double log(double a)	|返回 a 的自然对数，即 lna 的值|
+|static double log10(double a)	|返回以 10 为底 a 的对数|
+
