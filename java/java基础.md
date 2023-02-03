@@ -797,3 +797,49 @@ Math类位于java的lang包。
 |static double log(double a)	|返回 a 的自然对数，即 lna 的值|
 |static double log10(double a)	|返回以 10 为底 a 的对数|
 
+2. Java生成随机数（Math.random()和Random类）
+
+Random 类提供了丰富的随机数生成方法，可以产生 boolean、int、long、float、byte 数组以及 double 类型的随机数，这是它与 Math.random() 方法最大的不同之处。random() 方法只能产生 double 类型的 0~1 的随机数。
+
+Random 类位于 java.util 包中，该类常用的有如下两个构造方法。
++ Random()：该构造方法使用一个和当前系统时间对应的数字作为种子数，然后使用这个种子数构造 Random 对象。
++ Random(long seed)：使用单个 long 类型的参数创建一个新的随机数生成器。
+
+|方法	|说明|
+|:-----:|:------:|
+|boolean nextBoolean()	|生成一个随机的 boolean 值，生成 true 和 false 的值概率相等|
+|double nextDouble()	|生成一个随机的 double 值，数值介于 [0,1.0)，含 0 而不包含 1.0|
+|int nextlnt()|	生成一个随机的 int 值，该值介于 int 的区间，也就是 -231~231-1。如果需要生成指定区间的 int 值，则需要进行一定的数学变换|
+|int nextlnt(int n)	|生成一个随机的 int 值，该值介于 [0,n)，包含 0 而不包含 n。如果想生成指定区间的 int 值，也需要进行一定的数学变换|
+|void setSeed(long seed)	|重新设置 Random 对象中的种子数。设置完种子数以后的 Random 对象和相同种子数使用 new 关键字创建出的 Random 对象相同|
+|long nextLong()	|返回一个随机长整型数字|
+|boolean nextBoolean()	|返回一个随机布尔型值|
+|float nextFloat()	|返回一个随机浮点型数字|
+|double nextDouble()	|返回一个随机双精度值|
+
+例：
+```java
+Random r = new Random();
+double d1 = r.nextDouble(); // 生成[0,1.0]区间的小数
+double d2 = r.nextDouble() * 7; // 生成[0,7.0]区间的小数
+int i1 = r.nextInt(10); // 生成[0,10]区间的整数
+int i2 = r.nextInt(18) - 3; // 生成[-3,15)区间的整数
+long l1 = r.nextLong(); // 生成一个随机长整型值
+boolean b1 = r.nextBoolean(); // 生成一个随机布尔型值
+float f1 = r.nextFloat(); // 生成一个随机浮点型值
+```
+
+Math 类的 random() 方法没有参数，它默认会返回大于等于 0.0、小于 1.0 的 double 类型随机数，即 0<=随机数<1.0。对 random() 方法返回的数字稍加处理，即可实现产生任意范围随机数的功能。
+
+3. java数字格式化
+   DecimalFormat 是 NumberFormat 的一个子类，用于格式化十进制数字。DecimalFormat 类包含一个模式和一组符号
+|符号	|说明|
+|:-----:|:------:|
+|0	|显示数字，如果位数不够则补 0|
+|#	|显示数字，如果位数不够不发生变化|
+|.	|小数分隔符|
+|-	|减号|
+|,	|组分隔符|
+|E	|分隔科学记数法中的尾数和小数|
+|%	|前缀或后缀，乘以 100 后作为百分比显示|
+|?	|乘以 1000 后作为千进制货币符显示。用货币符号代替。如果双写，用国际货币符号代替；如果出现在一个模式中，用货币十进制分隔符代替十进制分隔符|
