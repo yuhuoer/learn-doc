@@ -693,7 +693,7 @@ StringBuffer对象.reverse();
 
 6. **代表抽象意义的特殊符号**  
 一些符号在表达式中代表抽象的特殊意义：
-![v2-e82dc4b831a7df20e043d85739cfc075_r](./pictures/2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
+![v2-e82dc4b831a7df20e043d85739cfc075_r](./pictures/v2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
 ![v2-3233067b80f2e3810850e9fdee5529dd_r](./pictures/v2-3233067b80f2e3810850e9fdee5529dd_r.png)
 
 
