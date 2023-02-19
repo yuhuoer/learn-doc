@@ -1,6 +1,6 @@
 ### MySQL架构
 
-![1](.\pictures\1.jpg)
+![1](./pictures/1.jpg)
 
 大体来说，MySQL可以分为Server层和存储引擎层两部分。
 
@@ -47,7 +47,7 @@ WAL技术：WAL的全称是Write-Ahead Logging，它的关键点就是先写日�
 
 InnoDB的redo log是固定大小的，比如可以配置为一组4个文件，每个文件的大小是1GB，那么redo log总共就可以记录4GB的操作。从头开始写，写到末尾就又回到开头循环写，如下面这个图所示。
 
-![2](.\pictures\2.jpg)
+![2](./pictures/2.jpg)
 
 write pos是当前记录的位置，一边写一边后移，写到第3号文件末尾后就回到0号文件开头。checkpoint是当前要擦除的位置，也是往后推移并且循环的，擦除记录前要把记录更新到数据文件。
 
@@ -77,7 +77,7 @@ MySQL整体来看，其实就有两块：一块是Server层，它主要做的是
 4. 执行器生成这个操作的binlog，并把binlog写入磁盘。
 5. 执行器调用引擎的提交事务接口，引擎把刚刚写入的redo log改成提交（commit）状态，更新完成。
 
-![3](.\pictures\3.jpg)
+![3](./pictures/3.jpg)
 
 将redo log的写入拆成了两个步骤：prepare和commit，这就是"两阶段提交"。
 

@@ -665,36 +665,36 @@ StringBuffer对象.reverse();
 **正则表达式规则**
 
 1. 字母、数字、汉字、下划线、以及没有特殊定义的标点符号，都是 "普通字符"。表达式中的普通字符，在匹配一个字符串的时候，匹配与之相同的一个字符。虽然可以匹配其中任意一个，但是**只能是一个，不是多个**。
-![v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r](.\pictures\v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r.jpg)
+![v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r](./pictures/v2-8b838a18b9a1fd9c8abede1fd51e7f5c_r.jpg)
 
 2. 一些不便书写的字符，采用在前面加 \ 的方法。
 
-![v2-85d6acd0a97f7e00477217db00dfb223_r](.\pictures\v2-85d6acd0a97f7e00477217db00dfb223_r.jpg)
+![v2-85d6acd0a97f7e00477217db00dfb223_r](./pictures/v2-85d6acd0a97f7e00477217db00dfb223_r.jpg)
 
-![v2-6309be0394bcb9d4159152e45374c356_r](.\pictures\v2-6309be0394bcb9d4159152e45374c356_r.jpg)
+![v2-6309be0394bcb9d4159152e45374c356_r](./pictures/v2-6309be0394bcb9d4159152e45374c356_r.jpg)
 
 3. 能够与 '多种字符' 匹配的表达式
 
 正则表达式中的一些表示方法，可以匹配 '多种字符' 其中的任意一个字符。比如，表达式 "\d" 可以匹配任意一个数字。虽然可以匹配其中任意字符，但是只能是一个，不是多个。
 
-![v2-60c3ff2055a5bd44667bfce65aa68cf1_r](.\pictures\v2-60c3ff2055a5bd44667bfce65aa68cf1_r.jpg)
+![v2-60c3ff2055a5bd44667bfce65aa68cf1_r](./pictures/v2-60c3ff2055a5bd44667bfce65aa68cf1_r.jpg)
 
 4. **自定义能够匹配 '多种字符' 的表达式**
 
 使用方括号 [ ] 包含一系列字符，能够匹配其中**任意**一个字符。用[ ^ ]包含一系列字符，则能够匹配其中字符之外的任意一个字符。同样的道理，虽然可以匹配其中任意一个，但是只能是一个，不是多个。
 
-![v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r](.\pictures\v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r.jpg)
+![v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r](./pictures/v2-39d3640ee6a9d3eefcbd8d9e3c91cbcf_r.jpg)
 
 5. **修饰匹配次数的特殊符号**
 
 前面讲到的表达式，无论是只能匹配一种字符的表达式，还是可以匹配多种字符其中任意一个的表达式，都只能匹配一次。如果使用表达式再加上修饰匹配次数的特殊符号，那么不用重复书写表达式就可以重复匹配。
 
-![v2-3864573332a310a899947345cb1fb108_r](.\pictures\v2-3864573332a310a899947345cb1fb108_r.jpg)
+![v2-3864573332a310a899947345cb1fb108_r](./pictures/v2-3864573332a310a899947345cb1fb108_r.jpg)
 
 6. **代表抽象意义的特殊符号**  
 一些符号在表达式中代表抽象的特殊意义：
-![v2-e82dc4b831a7df20e043d85739cfc075_r](.\pictures\v2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
-![v2-3233067b80f2e3810850e9fdee5529dd_r](.\pictures\v2-3233067b80f2e3810850e9fdee5529dd_r.png)
+![v2-e82dc4b831a7df20e043d85739cfc075_r](./pictures/2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
+![v2-3233067b80f2e3810850e9fdee5529dd_r](./pictures/v2-3233067b80f2e3810850e9fdee5529dd_r.png)
 
 
 **正则表达式工具** https://jex.im/regulex/#!flags=i&re=%5BABC%5D
