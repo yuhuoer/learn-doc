@@ -18,14 +18,14 @@
 
 ### HTTP 是什么？
 
-HTTP 是超文本传输协议，也就是**H**yper**T**ext **T**ransfer **P**rotocol。
+HTTP 是**超文本传输协议**，也就是**H**yper**T**ext **T**ransfer **P**rotocol。
 
 > 能否详细解释「超文本传输协议」？
 
 HTTP 的名字「超文本协议传输」，它可以拆成三个部分：
 
 - 超文本
-- 传输
+- 传输  
 - 协议
 
 ![三个部分](https://cdn.xiaolincoding.com/gh/xiaolincoder/ImageHost/计算机网络/HTTP/3-HTTP三部分.png)
@@ -83,7 +83,7 @@ HTML 就是最常见的超文本了，它本身只是纯文字文件，但内部
 
 OK，经过了对 HTTP 里这三个名词的详细解释，就可以给出比「超文本传输协议」这七个字更准确更有技术含量的答案：
 
-**HTTP 是一个在计算机世界里专门在「两点」之间「传输」文字、图片、音频、视频等「超文本」数据的「约定和规范」。**
+<font style=background:yellow>**HTTP 是一个在计算机世界里专门在「两点」之间「传输」文字、图片、音频、视频等「超文本」数据的「约定和规范」。**</font>
 
 > 那「HTTP 是用于从互联网服务器传输超文本到本地浏览器的协议」，这种说法正确吗？
 
@@ -157,7 +157,7 @@ Content-Length: 1000
 
 如上面则是告诉浏览器，本次服务器回应的数据长度是 1000 个字节，后面的字节就属于下一个回应了。
 
-大家应该都知道 HTTP 是基于 TCP 传输协议进行通信的，而使用了 TCP 传输协议，就会存在一个“粘包”的问题，**HTTP 协议通过设置回车符、换行符作为 HTTP header 的边界，通过 Content-Length 字段作为 HTTP body 的边界，这两个方式都是为了解决“粘包”的问题**。具体什么是 TCP 粘包，可以看这篇文章：[如何理解是 TCP 面向字节流协议？](https://xiaolincoding.com/network/3_tcp/tcp_stream.html)
+大家应该都知道 HTTP 是基于 TCP 传输协议进行通信的，而使用了 TCP 传输协议，就会存在一个**“粘包”**的问题，**HTTP 协议通过设置回车符、换行符作为 HTTP header 的边界，通过 Content-Length 字段作为 HTTP body 的边界，这两个方式都是为了解决“粘包”的问题**。具体什么是 TCP 粘包，可以看这篇文章：[如何理解是 TCP 面向字节流协议？](https://xiaolincoding.com/network/3_tcp/tcp_stream.html)
 
 *Connection 字段*
 
