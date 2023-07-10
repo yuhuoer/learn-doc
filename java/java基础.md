@@ -337,23 +337,22 @@ a[1]='s';
   static Integer valueOf(int i)
   static Integer valueOf(String s)
   static Integer valueOf(String s, int radix)
-  Java
   ```
   
   **参数**
-
+  
   - `i`  - 将返回表示`int`类型参数的`Integer`对象。
   - `s`  - 将返回字符串参数的`Integer`对象。
   - `radix`  - 这将用于根据传递的`String`确定返回`Integer`的值。
   
   **返回值**
-
+  
   - `valueOf(int i)` - 返回一个包含指定原始值的`Integer`对象。
-
+  
   - `valueOf(String s)` - 返回一个包含指定字符串表示形式值的`Integer`对象。
   
   - `valueOf(String s, int radix)` - 返回一个`Integer`对象，该对象包含指定字符串表示形式的整数值，并使用`radix`值进行解析。
-
+  
     ```java
     举例：
     public class Test { 
@@ -696,7 +695,6 @@ StringBuffer对象.reverse();
 ![v2-e82dc4b831a7df20e043d85739cfc075_r](./pictures/v2-e82dc4b831a7df20e043d85739cfc075_r.jpg)
 ![v2-3233067b80f2e3810850e9fdee5529dd_r](./pictures/v2-3233067b80f2e3810850e9fdee5529dd_r.png)
 
-
 **正则表达式工具** https://jex.im/regulex/#!flags=i&re=%5BABC%5D
 
 #### Pattern类和Matcher类
@@ -735,6 +733,7 @@ Math类位于java的lang包。
 **静态常量**：E(自然对数 Math.E)和PI(圆周率 Math.PI)
 
 **求最大值、最小值和绝对值**
+
 |方法	|说明|
 |:-----:|:------:|
 |static int abs(int a)|	返回 a 的绝对值|
