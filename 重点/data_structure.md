@@ -250,3 +250,87 @@ int Paritition1(int A[], int low, int high) {
 **适用场景**
 
 快速排序在大多数情况下都是适用的，尤其在数据量大的时候性能优越性更加明显。但是在必要的时候，需要考虑下优化以提高其在最坏情况下的性能。
+
+
+
+
+
+#### 堆排序
+
+**堆的性质**
+
+堆是一个**完全二叉树**。
+
+完全二叉树：假设二叉树深度为h，除第h层外，其余层数节点数都达到最大值，第h层所有节点都连续集中在最左边。
+
+> 平衡二叉树：左右子树高度差不超过1的树。
+
+堆的性质：堆的每一个父节点的值都大于或小于其子节点，堆的每个左子树和右子树也是一个堆。
+
+堆分为最小堆和最大堆。最大堆就是每个父节点的数值要大于子节点，最小堆就是每个父节点的值小于子节点。排队要求从小到大的话构建最大堆，反之建立最小堆。
+
+堆的存储一般用数组来实现。加入堆的父节点的数组下标为i的话，那么其左右节点的下标分别为**（2i+1）**和**（2i+2）**.如果孩子节点下标为j的话，父节点的下标为（j-1）/2。
+
+完全二叉树，加入有n个元素，那么在堆中最后一个父节点位置为**(n/2-1）**
+
+**建堆**
+
+建堆时间复杂度为O(n)
+
+堆排序时间复杂度为O(logn)
+
+```cpp
+void heapify(int arr[], int i, int n)//比较父节点与子节点大小，递归进行交换
+{
+    int largest = i;
+    int lson = 2*i+1;
+    int rson = 2*i+2;
+    if (lson<n && arr[lson] > arr[largest])
+    {
+        largest = lson;
+    }
+    if (rson<n && arr[rson] > arr[largest])
+    {
+        largest = rson;
+    }
+    if (largest!=i)
+    {
+        swap(arr[largest], arr[i]);
+        heapify(arr, largest, n);
+    }
+        
+}
+
+void heapSort(int arr[], int n)
+{
+    for (int i = n/2-1; i >= 0; i--)//建堆  建堆后最大值在下标为数组头部
+    {
+        heapify(arr, i, n);
+    }
+    for (int i = n-1; i > 0; i--)//堆排序
+    {
+        swap(arr[i], arr[0]);//从后向前排序，交换头节点与当前节点（头节点下沉完成后该节点为最大值，交换到数组后面）
+        heapify(arr, 0, i);
+    }
+}
+```
+
+
+
+循环列表判断队满
+
+1. 少用一个存储位置
+
+   <img src="./assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xpbGlsaWxpbGlsaWtp,size_16,color_FFFFFF,t_70.png" alt="img" style="zoom:67%;" />
+
+判断队空条件：rear==front
+
+判断队满条件：(rear+1)%maxsize==front
+
+2. 计数count--队列中有效元素个数
+
+   队列为空时，count==0
+
+   有元素入队时count++，当count==maxsize是代表队列满。
+
+   
