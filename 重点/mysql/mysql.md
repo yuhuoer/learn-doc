@@ -726,9 +726,184 @@ SQL 标准提出了四种隔离级别来规避脏读、不可重复度、幻读�
 
 
 
-SQL语句
+### SQL
 
-字符串在单引号中
+DDL(Data Definition Language)：数据定义语言，用来定义数据库对象：库、表、列等
 
-检查是否包含用in
+DML(Data Manipulation Language)：数据操作语言，用来定义数据库记录（数据）
 
+DCL(Data Control Language):数据控制语言，用来定义访问权限和安全级别
+
+DQL(Data Query Language)：数据查询语言，用来查询记录
+
+
+
+
+
+**DML:** 
+
+`SELECT`:从数据表中获取数据
+
+`UPDATE`更新数据表中的数据
+
+`DELETE`：从数据表中删除数据
+
+`INSERT INTO`向数据库中插入数据
+
+
+
+判断键值为空`is null`
+
+#### 基础语法
+
+##### DISTINCT
+
+在数据表中，可能会包含重复值。关键词`DISTINCT`用于返回唯一不同的值
+
+```sql
+SELECT DISTINCT Company FROM Orders 
+```
+
+##### WHERE
+
+##### AND & OR
+
+##### ORDER BY
+
+`ORDER BY`对指定列队结果集进行排序，默认升序`ASC`，可以使用`DESC`降序排序。
+
+```sql
+SELECT Company, OrderNumber FROM Orders ORDER BY Company
+SELECT Company, OrderNumber FROM Orders ORDER BY Company DESC, OrderNumber ASC
+```
+
+##### INSERT INTO
+
+向表格中插入新的行
+
+```sql
+INSERT INTO 表名称 VALUES (值1, 值2,....)
+```
+
+也可以将数据插入指定的列
+
+```
+INSERT INTO table_name (列1, 列2,...) VALUES (值1, 值2,....)
+```
+
+##### UPDATE
+
+修改表中的数据
+
+```sql
+UPDATE 表名称 SET 列名称 = 新值 WHERE 列名称 = 某值
+```
+
+DELETE
+
+删除表中的行
+
+```sql
+DELETE FROM 表名称 WHERE 列名称 = 值
+```
+
+
+
+
+
+
+
+#### 高级语法
+
+ROUND()
+
+ROUND()函数用于把数值字段舍入为指定的小数位数。
+
+```sql
+SELECT ROUND(column_name,decimals) FROM table_name
+column_name	必需。要舍入的字段。
+decimals	必需。规定要返回的小数位数。
+
+例：SELECT ProductName, ROUND(UnitPrice,0) as UnitPrice FROM Products
+```
+
+TOP
+
+TOP子句用于返回规定的记录数目
+
+```sql
+SELECT TOP 2 * FROM Persons
+SELECT TOP 50 PERCENT * FROM Persons
+```
+
+##### LIKE
+
+LIKE操作符用于在where子句中搜索指定模式
+
+```sql
+SELECT column_name(s)
+FROM table_name
+WHERE column_name LIKE pattern
+```
+
+##### 通配符
+
+| 配符                       | 描述                       |
+| :------------------------- | :------------------------- |
+| %                          | 代表零个或多个字符         |
+| _                          | 仅替代一个字符             |
+| [charlist]                 | 字符列中的任何单一字符     |
+| [^charlist]或者[!charlist] | 不在字符列中的任何单一字符 |
+
+IN
+
+```sql
+SELECT column_name(s)
+FROM table_name
+WHERE column_name IN (value1,value2,...)
+```
+
+BETWEEN
+
+操作符 BETWEEN ... AND 会选取介于两个值之间的数据范围。这些值可以是数值、文本或者日期。
+
+```sql
+SELECT column_name(s)
+FROM table_name
+WHERE column_name
+BETWEEN value1 AND value2
+```
+
+##### JOIN
+
+join用于根据两个或多个表中的列之间的关系，从这些表中查询数据
+
+数据库中的表可通过**键**将彼此联系起来。主键（Primary Key）是一个列，在这个列中的每一行的值都是唯一的。在表中，每个主键的值都是唯一的。这样做的目的是在不重复每个表中的所有数据的情况下，把表间的数据交叉捆绑在一起。
+
+- INNER JOIN 内连接
+
+- JOIN: 如果表中有至少一个匹配，则返回行（和INNER JOIN一样）
+
+  外连接：
+
+- LEFT JOIN: 即使右表中没有匹配，也从左表返回所有的行
+
+- RIGHT JOIN: 即使左表中没有匹配，也从右表返回所有的行
+
+- FULL JOIN: 只要其中一个表中存在匹配，就返回行
+
+```sql
+select column_name(s)
+from table1
+INNER JOIN table2
+ON
+ table1.column_name=table2.column_name
+```
+
+![img](./assets/1074709-20171229165319538-1026266241.png)
+
+![img](./assets/1074709-20171229170434726-2010021622.png)
+
+![img](./assets/1074709-20171229171503867-2027149651.png)
+
+![img](./assets/1074709-20171229172802179-389908324.png)
