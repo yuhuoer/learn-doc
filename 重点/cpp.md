@@ -1389,6 +1389,8 @@ C++中，使用优先级队列(`priority_queue`)需要包含<queue>头文件
 
 定义：`priority_queue<typename, container, functional>`
 
+`priority_queue<int, vector<int>, less<int>>`
+
 - **typename**是数据的类型；
 - **container**是容器类型，可以是vector,queue等用数组实现的容器，不能是list，默认可以用vector；
 - **functional**是比较的方式，默认是大顶堆（就是元素值越大，优先级越高）；如果使用C++基本数据类型，可以直接使用自带的**less**和**greater**这两个仿函数（**默认**使用的是less，就是构造**大顶堆**）。使用自定义的数据类型的时候，可以重写比较函数，也可以进行运算符重载（**less重载小于“<”运算符，构造大顶堆**；**greater重载大于“>”运算符，构造小顶堆**）。
@@ -2561,11 +2563,113 @@ std::shared_lock<Mutex>::unlock//等效于调用 mutex()->unlock_shared()
 
 #### 线程池
 
-线程池组成：
+线程池组成：工作线程队列、任务队列、提交任务函数。
+
+任务队列存放主线程需要处理的任务，工作线程队列其实是一个死循环，负责从任务队列中读取和运行任务，可以看成是单生产者多消费者模型。
 
 线程池应用场景：
 
-线程池实现：
+线程池实现： 
+
+```cpp
+#include<iostream>
+#include<vector>
+#include<thread>
+#include<mutex>
+#include<condition_variable>
+#include<queue>
+#include<functional>
+#include<chrono>
+
+using namespace std;
+//需要一个任务队列 ， 线程池， 锁， 条件变量 线程池停止标志位
+template<typename Task>
+class ThreadPool{
+public:
+    ThreadPool(size_t thread_nums){
+        for (size_t i = 0; i < thread_nums; i++)
+        {
+            m_threads.emplace_back([this](){
+                for (;;)
+                {
+                    Task task;
+                    {
+                        std::unique_lock<std::mutex> lock(m_mutex);
+                        m_cv.wait(lock,[this](){return m_stop || !m_tasks.empty();});
+                        if (m_stop && m_tasks.empty())
+                        {
+                            return;
+                        }
+                        task = std::move(m_tasks.front());
+                        m_tasks.pop();
+                        
+                    }
+                    {
+                    std::unique_lock<std::mutex> lock(m_mutex);
+                    task();
+                    }
+
+                    
+                }
+                
+            });
+        }
+    }
+
+    ~ThreadPool(){
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_stop = true;
+        }
+        m_cv.notify_all();
+        for (size_t i = 0; i < m_threads.size(); i++)
+        {
+            m_threads[i].join();
+        }
+    }
+
+    void submit(Task task){
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            if (m_stop)
+            {
+                throw std::runtime_error("submit on a stopped threadpool");
+            }
+            m_tasks.emplace(task);
+        }
+        m_cv.notify_one();
+    }
+
+    void wait(){
+
+    }
+
+private:
+    std::vector<std::thread> m_threads;
+    std::queue<Task> m_tasks;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    bool m_stop=false;
+
+};
+
+
+int main(int argc, char const *argv[])
+{
+    ThreadPool<std::function<void(void)>> threadpool(4);
+    cout << std::this_thread::get_id()<<endl;
+    for (int i = 0; i < 1000; i++)
+    {
+        threadpool.submit([i](){cout << "任务" << i <<"运行在"<< std::this_thread::get_id() <<endl;});
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+
+    return 0;
+}
+
+```
+
+
 
 
 
@@ -2680,15 +2784,13 @@ int main() {
 
 解决方法是使用`volatile`关键字。
 
-
-
 ##### 进程之间同步方式
 
 信号量、互斥量、管程、进程间通信
 
 ##### 线程间同步方式
 
-信号量、互斥量、临界区、事件
+信号量、互斥量、临界区、事件、条件变量
 
 ##### 多线程编程注意事项/原则
 
@@ -2929,6 +3031,173 @@ code2
 当标识符被定义过（一般使用#define 命令定义），则对code1进行编译，否则对code2进行编译
 
 3.头文件使用`ifdef endif`可以避免头文件重定义
+
+
+
+#### malloc怎么和物理内存产生关联
+
+malloc的实现申请的是虚拟内存，和物理内存无直接关联。内核为每个进程维护一张页表，页表存储进程空间内每页的虚拟地址，页表项中有的虚拟内存页有对应的物理内存页面，也有的虚拟内存没有实际的物理内存对应。无论通过sbrk还是mmap实现，分配到的内存只是虚拟内存，代表这块空间可以使用，实际上还没有分配到实际的物理页面。等进程访问这个新分配的内存空间的时候，如果还没有对应的物理页面分配，就会产生缺页中断，内核这个时候会给这个进程分配实际的物理页面，与这个未被映射的虚拟页面对应起来，程序就可以继续运行了。
+
+
+
+#### 静态库动态库的区别和使用场景
+
+Linux下动态库`.so`静态库`.a`
+
+Windows下动态库`.dll`静态库`.lib`
+
+静态库和动态库的区别：
+
+- 载入时机不同：静态库是在编译过程载入可执行程序，因此体积较大，运行时不需要静态库。动态库是在可执行程序运行时在载入内存的，编译过程仅简单的引用，因此代码体积较小，运行时需要动态库文件，多个程序需要同一个动态库只需要加载一份。
+- 代码复用性不同：静态库编译过程中加载到程序中，而动态库链接的时候只是保留接口，将动态库与程序代码独立，可以提高代码的复用性，降低程序的耦合度。当动态库内容发生改变时，只要接口不变就不需要重新编译程序。
+- 加载速度：静态库加载速度比动态库快一些。
+
+使用场景：
+
+静态库：静态库链接会使得可执行文件变大，加载时间较快，适用于小型应用的开发
+
+动态库：动态库常用于大型项目或者共享库的情况，可以减小目标程序的体积，同时对于需要频繁更新或升级的项目，只需要更新动态库文件即可，不需要重新编译目标程序。此外，动态库还支持插件式编程，使得程序功能能够动态的扩展。
+
+
+
+
+
+function函数包装器
+
+std::function是C++11的新特性，包含在头文件<functional>中。
+
+std::function是一个函数包装器，该函数包装器模板能包装任何类型的可调用实体，如**普通函数**，**函数指针**，**仿函数（函数对象）**，**lamda表达式**、**成员函数**、**静态函数**等。std::function对象实例可被拷贝和移动，并且可以使用指定的调用特征来直接调用目标元素。
+
+std::function对象实例不允许进行==和!=比较操作
+
+
+
+1. function包装函数
+
+```cpp
+int fun1(int a){
+    return a;
+}
+
+int main(int argc, char *argv[]){
+	std::function<int(int)> callback;
+    callback = fun1; //std::function包装函数
+    std::cout << callback(42) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+2. 包装函数指针
+
+```cpp
+int (*fun_ptr)(int);
+
+int fun1(int a){
+    return a;
+}
+
+int main(int argc, char *argv[]){
+    
+	std::function<int(int)> callback;
+    fun_ptr = fun1; //函数指针fun_ptr指向fun1函数
+    callback = fun_ptr; //std::function对象包装函数指针
+    std::cout << callback(10) << std::endl; //std::function对象实例调用包装的实体
+
+    return 0;
+}
+```
+
+3. 包装仿函数（函数对象）
+
+​	仿函数即为重载了operator()操作符的函数
+
+```cpp
+class Test
+{
+public:
+    Test(){};
+    ~Test(){};
+    int operator() (int x){
+        cout<< x <<endl;
+        return 0;
+    };
+
+};
+
+int main(int argc, char const *argv[])
+{
+    //std::function<int(Test*, int)> fun(&Test::operator());
+    std::function<int(int)> dun;
+    dun = Test();
+    dun(123);
+    return 0;
+}
+```
+
+4. 包装匿名函数lambda表达式
+
+```cpp
+int main(int argc, char *argv[]){
+
+	std::function<int(int)> callback;
+    auto fun3 = [](int a) {return a * 2;}; //lamda表达式
+    callback = fun3; //std::function包装lamda表达式
+    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+5. 包装静态成员函数
+
+```cpp
+class foo1{
+    static int foo(int a){
+        return a * 3;
+    }
+};
+
+int main(int argc, char *argv[]){
+    std::function<int(int)> callback;
+    callback = foo1::foo; //std::function包装对象静态函数
+    std::cout << callback(5) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+6. 包装类成员函数
+
+```cpp
+class foo3{
+    int foo(int a){
+        return a * a;
+    }
+};
+
+int main(int argc, char *argv[]){
+    std::function<int(int)> callback;
+
+    foo3 test_foo1;
+    callback = std::bind(&foo3::foo, test_foo1, std::placeholders::_1); //std::function包装类成员函数
+    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+std::bind的思想其实是一种延迟计算的思想，将可调用对象保存起来，然后在需要的时候再调用。而且这种绑定是非常灵活的，不论是普通函数还是函数对象还是成员函数都可以绑定，而且其参数可以支持占位符。
+
+这里的std::placeholders::_1是一个占位符，且绑定第一个参数，若可调用实体有2个形参，那么绑定第二个参数的占位符是std::placeholders::_2。
+
+```cpp
+int add(int a, int b){return a+b;}
+auto fun1 = std::bind(add,1,2);
+auto fun2 = std::bind(add,std::placeholders::_1,std::placeholders::_2);
+fun1();//1+2=3
+fun2(1,2);
+```
 
 
 
