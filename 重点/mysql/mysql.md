@@ -1002,6 +1002,145 @@ AUTO-INC 锁是特殊的表锁机制，锁**不是再一个事务提交后才释
 
 
 
+#### 日志
+
+undo log(回滚日志)：是**innodb存储引擎层**生成的日志，实现了事务中的**原子性**，主要用于**事务回滚**和**MVCC多版本控制**。
+
+redo log(重做日志)：是**innodb存储引擎层**生成的日志，实现了事务中的**持久性**，主要用于**掉电等故障恢复**。
+
+binlog(归档日志)：是**server层**生成的日志，主要用于**数据备份和主从复制**。
+
+##### undo log
+
+undo log是一种用于撤销回退的日志，在事务没提交之前，MySQL会先记录更新前的数据到undo log日志文件里，当事务回滚时，可以利用undo log进行回滚。
+
+每次innodb引擎对一条记录进行操作（增删改）时，把回滚时需要的信息都记录到undo log里。如：
+
+- **插入**记录时，把这条记录的**主键记录**下来，回滚时只需**删除主键**对应的记录。
+
+- **删除**记录时，把记录中的**内容**都记录下来，回滚时把这些**内容插入**到表中。
+- **更新**记录时，把被更新列的**旧值**记录下来，回滚时**更新为旧值**。
+
+一条记录的每一次更新操作产生的 undo log 格式都有一个 roll_pointer 指针和一个 trx_id 事务id：
+
+- 通过 trx_id 可以知道该记录是被哪个事务修改的；
+- 通过 roll_pointer 指针可以将这些 undo log 串成一个链表，这个链表就被称为版本链；
+
+另外，**undo log 还有一个作用，通过 ReadView + undo log 实现 MVCC（多版本并发控制）**。
+
+因此undo log**两大作用**：
+
+- **实现事务回滚，保障事务的原子性**。事务处理过程中，如果出现了错误或者用户执 行了 ROLLBACK 语句，MySQL 可以利用 undo log 中的历史数据将数据恢复到事务开始之前的状态。
+- **实现 MVCC（多版本并发控制）关键因素之一**。MVCC 是通过 ReadView + undo log 实现的。undo log 为每条记录保存多份历史数据，MySQL 在执行快照读（普通 select 语句）的时候，会根据事务的 Read View 里的信息，顺着 undo log 的版本链找到满足其可见性的记录。
+
+##### Buffer Pool
+
+Buffer Pool（缓冲池）在Innodb存储引擎层，用来提高数据库的读写性能。在server端完成对数据的查询和更新后，将其存放入Buffer Pool中（基于**内存**的）。
+
+MySQL以页为单位进行数据的读取，Buffer Pool同样以页来进行划分（记录一整页的数据）。Buffer Pool中的页称为**缓存页**。
+
+Buffer Pool 除了缓存「**索引页**」和「**数据页**」，还包括了 **Undo 页**，**插入缓存**、**自适应哈希索引**、**锁信息**等等。
+
+Buffer Pool作用：
+
+- 当读取数据时，如果数据位于Buffer Pool中，客户端直接读取Buffer Pool中的数据，否则再去磁盘中读取。
+- 当修改数据时，如果数据存在于Buffer Pool中，那直接修改Buffer Pool中数据所在的页，然后将其设置为脏页（表示该页内存数据和磁盘中不一致），为了减少磁盘IO，不会立刻将脏页写入磁盘，而是由后台线程选择一个合适的时机将脏页写入磁盘中。
+
+
+
+##### redo log
+
+为了防止断电导致Buffer Pool脏页数据丢失的问题，当有一条记录需要更新的时候，InnoDB 引擎就会先更新Buffer Pool内存（同时标记为脏页），然后将本次对这个页的修改以 redo log 的形式记录下来，**这个时候更新就算完成了**。后续在合适的时候，由后台进程将Buffer Pool中的脏页刷新到磁盘中，这就是**WAL**(Write-Ahead Logging)技术。
+
+**WAL 技术指的是， MySQL 的写操作并不是立刻写到磁盘上，而是先写日志，然后在合适的时间再写到磁盘上**。
+
+<img src="./assets/wal.png" alt="img" style="zoom: 50%;" />
+
+在事务提交时，只要先将redo log持久化到磁盘上即可，可以不需要等到Buffer Pool中的脏页持久到磁盘。当系统崩溃时，虽然脏页数据没有持久化，但是redo log已经持久化，MySQL重启后可以根据redo log里的内容将数据恢复到最新的状态。
+
+undo log修改也会记录至redo log。
+
+undo log和redo log都是innodb存储引擎的日志，区别：
+
+- redo log记录了此次**事务完成后**的数据状态，记录的是**更新之后**的值。
+- undo log记录的是此次**事务开始前**的数据状态，记录的是**更新前**的值。
+
+**产生的redo log直接写入磁盘吗**
+
+不是的，redo log也有自己的缓存redo log buffer（在innodb中Log Buffer中），每当产生一条redo log时，会写入redo log buffer中，后续再持久化到磁盘。
+
+redo log buffer默认大小16MB.
+
+**redo log作用**：
+
+- 实现事务的持久性，让MySQL拥有崩溃恢复的能力，能够保证MySQL在任何时间段突然崩溃，重启后之前提交的记录不会丢失。
+- 将写操作从随机写变成了顺序写，提升了MySQL写入磁盘的能力。
+
+
+
+**redo log buffer什么时候刷盘**
+
+刷盘时机：
+
+- MySQL正常关机时
+- 当redo log buffer中记录的写入量大于redo log buffer内存空间的一半时
+- Innodb后台进程每隔1s会将redo log buffer持久化到磁盘
+- 每次提交事务都将redo log buffer中的redo log持久化到磁盘（由`innodb_flush_log_at_trx_commit`控制）
+
+
+
+redo log写满了怎么办
+
+默认情况下，InnoDB存储引擎有1个重做日志文件组(redo log group)，重做日志文件组由2个redo log文件组成。
+
+重做日志组中，每隔redo log file的大小是固定且一致的，重做日志文件组是以**循环写**的方式工作的，从头到尾又回到开头，相当于一个环。
+
+InnoDB存储引擎会先写file1，写满再写file2，写满后再切换回来。
+
+redo log是为了防止内存中脏页丢失而设计的，随着程序运行，后台进程会将Buffer Pool中脏页刷新到磁盘中，redo log对应的记录也就没用了，这个时候就需要擦除这个记录，腾出空间来记录新的更新操作。
+
+innoDB 用 write pos 表示 redo log 当前记录写到的位置，用 checkpoint 表示当前要擦除的位置
+
+<img src="./assets/checkpoint.png" alt="img" style="zoom:50%;" />
+
+图中：
+
+- write pos 和 checkpoint 的移动都是顺时针方向；
+- write pos ～ checkpoint 之间的部分（图中的红色部分），用来记录新的更新操作；
+- check point ～ write pos 之间的部分（图中蓝色部分）：待落盘的脏数据页记录；
+
+如果 write pos 追上了 checkpoint，就意味着 **redo log 文件满了，这时 MySQL 不能再执行新的更新操作，也就是说 MySQL 会被阻塞**（*因此所以针对并发量大的系统，适当设置 redo log 的文件大小非常重要*），此时**会停下来将 Buffer Pool 中的脏页刷新到磁盘中，然后标记 redo log 哪些记录可以被擦除，接着对旧的 redo log 记录进行擦除，等擦除完旧记录腾出了空间，checkpoint 就会往后移动（图中顺时针）**，然后 MySQL 恢复正常运行，继续执行新的更新操作。
+
+
+
+##### binlog
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
