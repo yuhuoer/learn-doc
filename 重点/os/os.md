@@ -665,7 +665,7 @@ epoll优点：
 
 #### Reactor模型
 
-Reactor模型是基于事件驱动的高性能IO模型，使用IO多路复用机制。Reactor的核心机制是将IO事件的处理分离开来，由一个主线程Reactor负责监听所有的IO事件，根据事件的类型分发给Acceptor对象或者Handler对象来处理事件，从而实现高效额IO操作。
+Reactor模型是基于事件驱动的高性能IO模型，使用IO多路复用机制。Reactor的核心机制是将IO事件的处理分离开来，由一个主线程Reactor负责监听所有的IO事件，根据事件的类型分发给Acceptor对象或者Handler对象来处理事件，从而实现高效的IO操作。
 
 ##### Reactor模型组成
 
