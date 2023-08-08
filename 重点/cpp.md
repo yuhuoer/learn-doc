@@ -637,6 +637,18 @@ auto print = print_class();
 
    C++中原子变量（atomic）是一种多线程编程中常用的同步机制，它能够确保对共享变量的操作在执行时不会被其他线程的操作干扰，从而避免竞态条件（race condition）和死锁（deadlock）等问题。原子变量可以看作是一种特殊的类型，它具有类似于普通变量的操作，但是这些操作都是原子级别的，即要么全部完成，要么全部未完成。
 
+   底层原理：底层对原子操作有两种支持
+   
+   1. bus lock
+   
+      当CPU发出一个原子操作的时候，可以先锁住bus总线，这样可以避免其他CPU的内存操作。等到原子操作结束后，释放bus。这种方式可以实现原子操作，但是锁住Bus会导致后续无关内存操作都不能继续。实际上，我们只关心我们操作的地址数据，只需要将我们操作的地址锁住即可，而其他的无关的地址可以继续访问。
+   
+   2. Cache lock
+   
+      为了实现多核Cache一致性，现在的硬件基本上采用了MESI协议维护一致性。假设一个系统有2个CPU，当CPU0试图执行原子递增操作时。a) CPU0发出"Read Invalidate"消息，其他CPU将原子变量所在的缓存无效，并从Cache返回数据。CPU0将Cache line置成Exclusive状态。然后将该**cache line标记locked**。b) 然后CPU0读取原子变量，修改，最后写入cache line。c) 将cache line置位unlocked。
+
+   3. 除此之外，还有一些硬件操作指令，CAS(Compare and Swap)、内存屏障、防止内存重排序等。
+
    > atomic和volatile区别和联系
    >
    > volatile关键字防止编译器读取缓存而是直接读取内存上的数据。不能保证原子性。
@@ -646,26 +658,26 @@ auto print = print_class();
    > ![img](./assets/20190118155122441.png)
    >
    > atomic能够保证变量的原子性。
-
+   
    atomic 原子操作支持bool、int、char等数据数据类型，但是**不支持浮点数类型** 。
-
+   
    构造函数：
-
+   
    **`std::atomic::atomic`**
-
+   
    （1）默认：使对象处于未初始化状态。 `atomic() noexcept = default;`
    （2）初始化 ：使用val初始化对象。` constexpr atomic (T val) noexcept;`
    （3）复制 [删除] ：无法复制/移动对象。` atomic (const atomic&) = delete;`
-
+   
    ```cpp
    std::atomic <bool>  atomic_bool_test1(false);
    std::atomic <int>   atomic_int_test1(0);
    ```
 
    **`store`函数**
-
+   
    `std::atomic<T>::store()`是一个成员函数，用于将给定的值存储到原子对象中。
-
+   
    ```cpp
    void store(T desired, std::memory_order order = std::memory_order_seq_cst) volatile noexcept;
    void store(T desired, std::memory_order order = std::memory_order_seq_cst) noexcept;
@@ -673,10 +685,10 @@ auto print = print_class();
 
    - `desired`：要存储的值。
    - `order`：存储操作的内存顺序。默认是`std::memory_order_seq_cst`（顺序一致性）。
-
+   
    **`load`函数**
    `load`函数用于获取原子变量的当前值。它有以下两种形式：
-
+   
    ```cpp
    T load(memory_order order = memory_order_seq_cst) const noexcept;
    operator T() const noexcept;
@@ -692,11 +704,11 @@ auto print = print_class();
    T exchange( volatile std::atomic<T>* obj, T desired );
    ```
    其中，obj参数指向需要替换值的atomic对象，desired参数为期望替换成的值。如果替换成功，则返回原来的值。
-
+   
    整个操作是原子的（原子读-修改-写操作）：从读取（要返回）值的那一刻到此函数修改值的那一刻，该值不受其他线程的影响。
-
+   
    **`compare_exchange_weak`函数**
-
+   
    这个函数的作用是比较一个值和一个期望值是否相等，如果相等则将该值替换成一个新值，并返回true；否则不做任何操作并返回false。
 
    ```cpp
@@ -705,12 +717,12 @@ auto print = print_class();
    bool compare_exchange_weak (T& expected, T val,memory_order success, memory_order failure) volatile noexcept;
    bool compare_exchange_weak (T& expected, T val,memory_order success, memory_order failure) noexcept;
    ```
-
+   
    - expected：期望值的地址，也是输入参数，表示要比较的值；
    - val：新值，也是输入参数，表示期望值等于该值时需要替换的值；
    - success：表示函数执行成功时内存序的类型，默认为memory_order_seq_cst；
    - failure：表示函数执行失败时内存序的类型，默认为memory_order_seq_cst。
-
+   
    | 成员函数 | 含义                     |
    | --------- | ------------------------------------------------------------ |
    | fetch_add | 添加到包含的值并返回它在操作之前具有的值                     |
@@ -718,6 +730,7 @@ auto print = print_class();
    | fetch_and | 读取包含的值，并将其替换为在读取值和 之间执行按位 AND 运算的结果。 |
    | fetch_or  | 读取包含的值，并将其替换为在读取值和 之间执行按位 OR 运算的结果。 |
    | fetch_xor | 读取包含的值，并将其替换为在读取值和 之间执行按位 XOR 运算的结果。 |
+   
 2. std::thread相关
 
    头文件`#include<thread>`std::thread常用成员函数
