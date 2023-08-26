@@ -1437,6 +1437,42 @@ table1.column_name=table2.column_name
 
 ![img](./assets/1074709-20171229172802179-389908324.png)
 
+##### UNION和UNION ALL操作符
+
+UNION 操作符用于合并两个或多个 SELECT 语句的结果集
+
+请注意，UNION 内部的 SELECT 语句必须拥有相同数量的列。列也必须拥有相似的数据类型。同时，每条 SELECT 语句中的列的顺序必须相同。
+
+**注释：**默认地，UNION 操作符选取不同的值（去重）。如果允许重复的值，请使用 UNION ALL（不去重）。
+
+
+
+##### with as
+
+with as语句也叫子查询部分，可以定义一个sql片段，该sql片段会被整个sql语句用到。可以使sql语句的可读性更高。
+
+例如：
+
+```sql
+select * from person.StateProvince where CountryRegionCode in 
+         (select CountryRegionCode from person.CountryRegion where Name like 'C%')
+```
+
+使用了嵌套查询，如果嵌套层次过多，会使sql难以维护。
+
+```sql
+with cr as 
+( 
+    select CountryRegionCode from person.CountryRegion where Name like 'C%' 
+)
+
+select * from person.StateProvince where CountryRegionCode in (select * from cr)
+```
+
+使用with as代替嵌套
+
+
+
 #### SQL函数
 
 ##### Date

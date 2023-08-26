@@ -1,3 +1,91 @@
+#### C++面向对象
+
+面向对象三大特性：封装、继承、多态
+
+封装：将一个对象的各个组成部分封闭起来，通过访问说明符(public、private、protected)来控制成员变量和成员函数的访问权限，隐藏对象内部的实现机制。封装实现了数据和行为的统一管理，提高了系统的稳定性、安全性和扩展性。
+
+继承：可以基于已有的类创建新类，子类继承父类的非私有成员和方法，实现代码复用。通过继承可以形成一个层级结构的类和子类的关系，更清晰的展示类与类之间的关系。
+
+多态：多态通俗来说就是多种形态。当完成一个行为时，不同的对象去做就会有不同的状态。多态分为静态多态和动态多态。静态多态是通过函数重载和模板来实现的，确定在编译器；动态多态是通过虚函数和继承来实现的，确定在运行期。
+
+向上转型：创建一个父类，父类的引用指向子类（安全）。因为子类相对于父类功能更多，父类有的子类都有。
+
+向下转型：创建一个子类，子类的引用指向父类，需要进行强制转换。
+
+
+
+##### 虚函数
+
+多重继承下派生类有几个基类（带虚函数的）就有几个虚函数表指针。
+
+纯虚函数：虚函数后面加上`=0`，继承后必须重写才能被实例化。
+
+抽象类：包含纯虚函数的类称为抽象类，抽象类不能被实例化，只有派生类继承后重写纯虚函数才能实例化。
+
+##### **虚函数和虚函数表位于哪个地方**
+
+类的内存最开始四个字节就是虚函数表的指针，指针变量的值就是虚函数表的地址。C++中虚函数表位于数据段，也就是C++内存模型中的常量区；而虚函数位于代码段(.text)，也就是C++内存模型中的代码区。 
+
+虚函数表生成时机：编译期
+
+虚函数表指针生成时机：编译器会在类的构造函数中添加位虚函数表指针赋值的语句。虚函数表指针创建时机为运行时对象实例化时创建。
+
+
+
+##### 虚函数的重写
+
+虚函数的重写（覆盖）：派生类中有一个跟基类完全相同的虚函数（即派生类虚函数与基类虚函数的返回值类型、函数名称、参数列表完全相同）。
+
+虚函数重写的两个例外：
+
+1. 协变：基类与派生类虚函数返回值类型不同。即基类返回基类对象的指针或引用，派生类返回派生类的指针或引用。
+2. 析构函数的重写：基类与派生类的析构函数名字不同。如果基类的析构函数为虚函数，此时派生类析构函数只要定义，无论是否加virtual关键字，都与基类的析构函数构成重写。
+
+`override`和`final`
+
+`final`：修饰虚函数，标识该虚函数不能再被继承
+
+`override`：检查派生类函数是否重写了基类某个虚函数，如果没有重写编译报错。
+
+##### 多重继承
+
+多重继承：如果一个派生类继承了多个基类，就称为多继承。
+
+多重继承下内存模型：对象内存排列顺序与继承时声明的顺序一致。
+
+多重继承优点：可以调用多个基类的成员和方法。
+
+多重继承缺点：多重继承占用内存较多；多重继承会出现二义性（命名冲突）
+
+举例菱形继承：
+
+![img](./assets/v2-8d01457781b760b50ad98a5666eb2191_1440w.png)
+
+```cpp
+class A; 
+class B : public A;
+class C : public A;
+class D : public B, public C;
+```
+
+D中会出现两次A，使用A的成员变量时会出现二义性（使用来自B的还是来自C的）
+
+二义性解决方法：
+
+1. 加上类名或者域解析符`::`确定使用哪个父类的成员（增加代码的复杂度，降低了可读性）
+2. 虚继承，在第一级继承时就将共同基类设置为虚基类（虚继承），只保留唯一的一份基类成员。
+
+```cpp
+class A; 
+class B : public virtual A;
+class C : public virtual A;
+class D : public B, public C;
+```
+
+被虚继承的类称为虚基类。
+
+
+
 **前向迭代器、双向迭代器、随机访问迭代器用法区别，迭代器之间元素的个数**
 
 前向迭代器：支持`p++`、`++p`
@@ -868,6 +956,162 @@ auto print = print_class();
 
    `shared_future`类似future，但可以支持多线程同步，等待信号状态。`future在`调用`get`后失效。shared_future支持拷贝构造及移动，允许有多个对象监听状态，因此可以支持拷贝
 
+
+
+##### function函数包装器
+
+std::function是C++11的新特性，包含在头文件<functional>中。
+
+std::function是一个函数包装器，可以实现函数指针的功能，该函数包装器模板能包装任何类型的可调用实体，如**普通函数**，**函数指针**，**仿函数（函数对象）**，**lamda表达式**、**成员函数**、**静态函数**等。std::function对象实例可被拷贝和移动，并且可以使用指定的调用特征来直接调用目标元素。
+
+std::function对象实例不允许进行==和!=比较操作
+
+1. function包装函数
+
+```cpp
+int fun1(int a){
+    return a;
+}
+
+int main(int argc, char *argv[]){
+	std::function<int(int)> callback;
+    callback = fun1; //std::function包装函数
+    std::cout << callback(42) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+2. 包装函数指针
+
+```cpp
+int (*fun_ptr)(int);
+
+int fun1(int a){
+    return a;
+}
+
+int main(int argc, char *argv[]){
+    
+	std::function<int(int)> callback;
+    fun_ptr = fun1; //函数指针fun_ptr指向fun1函数
+    callback = fun_ptr; //std::function对象包装函数指针
+    std::cout << callback(10) << std::endl; //std::function对象实例调用包装的实体
+
+    return 0;
+}
+```
+
+3. 包装仿函数（函数对象）
+
+​	仿函数即为重载了operator()操作符的函数
+
+```cpp
+class Test
+{
+public:
+    Test(){};
+    ~Test(){};
+    int operator() (int x){
+        cout<< x <<endl;
+        return 0;
+    };
+
+};
+
+int main(int argc, char const *argv[])
+{
+    //std::function<int(Test*, int)> fun(&Test::operator());
+    std::function<int(int)> dun;
+    dun = Test();
+    dun(123);
+    return 0;
+}
+```
+
+4. 包装匿名函数lambda表达式
+
+```cpp
+int main(int argc, char *argv[]){
+
+	std::function<int(int)> callback;
+    auto fun3 = [](int a) {return a * 2;}; //lamda表达式
+    callback = fun3; //std::function包装lamda表达式
+    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+5. 包装静态成员函数
+
+```cpp
+class foo1{
+    static int foo(int a){
+        return a * 3;
+    }
+};
+
+int main(int argc, char *argv[]){
+    std::function<int(int)> callback;
+    callback = foo1::foo; //std::function包装对象静态函数
+    std::cout << callback(5) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+6. 包装类成员函数
+
+```cpp
+class foo3{
+    int foo(int a){
+        return a * a;
+    }
+};
+
+int main(int argc, char *argv[]){
+    std::function<int(int)> callback;
+
+    foo3 test_foo1;
+    callback = std::bind(&foo3::foo, test_foo1, std::placeholders::_1); //std::function包装类成员函数
+    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
+
+    return 0;
+}
+```
+
+std::bind的思想其实是一种延迟计算的思想，将可调用对象保存起来，然后在需要的时候再调用。而且这种绑定是非常灵活的，不论是普通函数还是函数对象还是成员函数都可以绑定，而且其参数可以支持占位符。
+
+这里的std::placeholders::_1是一个占位符，且绑定第一个参数，若可调用实体有2个形参，那么绑定第二个参数的占位符是std::placeholders::_2。
+
+```cpp
+int add(int a, int b){return a+b;}
+auto fun1 = std::bind(add,1,2);
+auto fun2 = std::bind(add,std::placeholders::_1,std::placeholders::_2);
+fun1();//1+2=3
+fun2(1,2);
+```
+
+##### `std::bind()`函数
+
+bind用来将可调用对象与其参数一起进行绑定，绑定后的结果可以使用`std::function`进行保存，并延迟调用到我们需要的时候。
+
+通常来说有两大作用：
+
+1. 将可调用对象与其参数一起绑定成一个仿函数。
+2. 将多元函数(多个参数)可调用对象转换成一元可调用对象，即只绑定部分参数(使用`std::placeholder`占位符)
+
+```cpp
+void output(int x)
+{
+    std::cout << x << " ";
+}
+auto fr = std::bind(output, std::placeholders::_1);
+```
+
+
+
 #### 悬空指针、野指针
 
 悬空指针：指针指向的内存被释放了但是指针没有改变指向，仍然指着内存被回收的内存地址。
@@ -1555,13 +1799,26 @@ bool operator < (const Data &a, const Data &b) {
 
 #### vector是线程安全的吗
 
-**vector不是线程安全的**，对于vector来说，即使生产者单线程写入，但是并发读的时候，由于潜在的内存重新申请和对象复制问题，会导致消费者的**迭代器失效**。
+**vector不是线程安全的**。
+
+原因一：对于vector来说，即使生产者单线程写入，但是并发读的时候，由于潜在的内存重新申请和对象复制问题，会导致消费者的**迭代器失效**。
+
+原因二：内存读取异常，多线程同时读写操作时会导致容器内数据不一致。
 
 解决方法：
 
 1. 加锁，使用std::mutex互斥锁（性能较差），对于读多写少的场景可以用读写锁。
 
-2. 可以固定vector的大小，避免动态扩容。即在开始并发读写之前给vector设置好大小。resize函数。
+2. 使用无锁设计，常见的思路是CAS(compare and swap)和原子变量(atomic)
+
+3. 可以固定vector的大小，避免动态扩容。即在开始并发读写之前给vector设置好大小。resize函数。
+
+#### 如何提高vector的并发性能
+
+1. vector不是线程安全的，所以在并发时需要避免读写冲突。使用锁编程（互斥锁或者读写锁）或者无锁编程（原子量）避免竞争，
+2. 提前分配足够的空间以避免不必要的重新分配和复制周期
+3. 尽量避免在vector前部插入元素
+4. 插入元素的时候用`emplace_back()而不是push_back()`
 
 
 
@@ -1747,6 +2004,16 @@ private:
 };
 
 ```
+
+##### 如何将一个unique_ptr转移给另一个unique_ptr
+
+在C++中，可以使用`std::move`将一个对象的所有权转移给另一个unique_ptr。让出所有权的只能只恨变为null。
+
+`std::move`将unique_ptr变为右值，调用移动构造函数。
+
+
+
+
 
 
 
@@ -2091,9 +2358,7 @@ show detach-on-fork //显示当前跟踪模式
 
 
 
-#### **虚函数和虚函数表位于哪个地方**
 
-类的内存最开始四个字节就是虚函数表的指针，指针变量的值就是虚函数表的地址。C++中虚函数表位于数据段，也就是C++内存模型中的常量区；而虚函数位于代码段(.text)，也就是C++内存模型中的代码区。
 
 
 
@@ -2102,6 +2367,29 @@ show detach-on-fork //显示当前跟踪模式
 顺序容器：vector、deque、list、stack、queue、priority_queue
 
 关联式容器：set、multiset、hash_set、map、multimap、hashtable、 hash_map、unordered_map 
+
+##### STL线程安全问题
+
+STL不保证容器的线程安全。
+
+STL线程安全的情况：
+
+- 多个线程读取是安全的。多线程可能同时读取一个容器的内容，读取时不能有任何写入这操作这个容器。
+- 对不同容器的多个写入时安全的，多线程可以同时写不同的容器。
+
+STL线程不安全的情况：
+
+- 对同一个容器进行多线程的读写、写写操作时
+
+如何解决STL线程安全问题：
+
+- 每次调用容器的成员函数期间需要锁定
+- 每个容器返回迭代器（例如通过调用begin或end）的生存期之内需要锁定
+- 每个容器在调用算法的执行期需要锁定
+
+
+
+
 
 ##### 顺序容器
 
@@ -3262,143 +3550,6 @@ Windows下动态库`.dll`静态库`.lib`
 
 
 
-
-function函数包装器
-
-std::function是C++11的新特性，包含在头文件<functional>中。
-
-std::function是一个函数包装器，该函数包装器模板能包装任何类型的可调用实体，如**普通函数**，**函数指针**，**仿函数（函数对象）**，**lamda表达式**、**成员函数**、**静态函数**等。std::function对象实例可被拷贝和移动，并且可以使用指定的调用特征来直接调用目标元素。
-
-std::function对象实例不允许进行==和!=比较操作
-
-
-
-1. function包装函数
-
-```cpp
-int fun1(int a){
-    return a;
-}
-
-int main(int argc, char *argv[]){
-	std::function<int(int)> callback;
-    callback = fun1; //std::function包装函数
-    std::cout << callback(42) << std::endl; //std::function对象实例调用包装的调用实体
-
-    return 0;
-}
-```
-
-2. 包装函数指针
-
-```cpp
-int (*fun_ptr)(int);
-
-int fun1(int a){
-    return a;
-}
-
-int main(int argc, char *argv[]){
-    
-	std::function<int(int)> callback;
-    fun_ptr = fun1; //函数指针fun_ptr指向fun1函数
-    callback = fun_ptr; //std::function对象包装函数指针
-    std::cout << callback(10) << std::endl; //std::function对象实例调用包装的实体
-
-    return 0;
-}
-```
-
-3. 包装仿函数（函数对象）
-
-​	仿函数即为重载了operator()操作符的函数
-
-```cpp
-class Test
-{
-public:
-    Test(){};
-    ~Test(){};
-    int operator() (int x){
-        cout<< x <<endl;
-        return 0;
-    };
-
-};
-
-int main(int argc, char const *argv[])
-{
-    //std::function<int(Test*, int)> fun(&Test::operator());
-    std::function<int(int)> dun;
-    dun = Test();
-    dun(123);
-    return 0;
-}
-```
-
-4. 包装匿名函数lambda表达式
-
-```cpp
-int main(int argc, char *argv[]){
-
-	std::function<int(int)> callback;
-    auto fun3 = [](int a) {return a * 2;}; //lamda表达式
-    callback = fun3; //std::function包装lamda表达式
-    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
-
-    return 0;
-}
-```
-
-5. 包装静态成员函数
-
-```cpp
-class foo1{
-    static int foo(int a){
-        return a * 3;
-    }
-};
-
-int main(int argc, char *argv[]){
-    std::function<int(int)> callback;
-    callback = foo1::foo; //std::function包装对象静态函数
-    std::cout << callback(5) << std::endl; //std::function对象实例调用包装的调用实体
-
-    return 0;
-}
-```
-
-6. 包装类成员函数
-
-```cpp
-class foo3{
-    int foo(int a){
-        return a * a;
-    }
-};
-
-int main(int argc, char *argv[]){
-    std::function<int(int)> callback;
-
-    foo3 test_foo1;
-    callback = std::bind(&foo3::foo, test_foo1, std::placeholders::_1); //std::function包装类成员函数
-    std::cout << callback(9) << std::endl; //std::function对象实例调用包装的调用实体
-
-    return 0;
-}
-```
-
-std::bind的思想其实是一种延迟计算的思想，将可调用对象保存起来，然后在需要的时候再调用。而且这种绑定是非常灵活的，不论是普通函数还是函数对象还是成员函数都可以绑定，而且其参数可以支持占位符。
-
-这里的std::placeholders::_1是一个占位符，且绑定第一个参数，若可调用实体有2个形参，那么绑定第二个参数的占位符是std::placeholders::_2。
-
-```cpp
-int add(int a, int b){return a+b;}
-auto fun1 = std::bind(add,1,2);
-auto fun2 = std::bind(add,std::placeholders::_1,std::placeholders::_2);
-fun1();//1+2=3
-fun2(1,2);
-```
 
 
 

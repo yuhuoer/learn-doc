@@ -207,17 +207,13 @@ http权威指南中是这样说的：
 
 #### HTTP1.1相较于HTTP1.0优化哪些问题
 
-HTTP1.0短链接。浏览器每次请求都需要与服务器建立一个TCP连接，服务器处理完成以后立即断开TCP连接（无连接），服务器不跟踪连接，也不记录过去的请求（无状态）。
+1. HTTP1.1支持长连接。HTTP1.0短链接。浏览器每次请求都需要与服务器建立一个TCP连接，服务器处理完成以后立即断开TCP连接（无连接），服务器不跟踪连接，也不记录过去的请求（无状态）。HTTP1.1提出了长连接的通信方式，也叫持久连接。这种方式的好处在于减少了TCP连接的重复建立和断开所造成的额外开销，减轻了服务器端的负载。
 
-HTTP1.0存在队头阻塞。由于HTTP1.0规定下一个请求必须在前一个请求响应到达之前才能发送，假设前一个请求响应一直不到达，那么下一个请求就不发送，后面的请求就阻塞了
-
-.3
+2. HTTP1.1支持管道网络传输管道网络传输HTTP1.0存在队头阻塞。由于HTTP1.0规定下一个请求必须在前一个请求响应到达之前才能发送，假设前一个请求响应一直不到达，那么下一个请求就不发送，后面的请求就阻塞了。
 
 #### HTTP1.1优点缺点
 
-优点：
-
-HTTP最突出的优点是简单、灵活、易于扩展、应用广泛和跨平台。
+优点：HTTP最突出的优点是简单、灵活、易于扩展、应用广泛和跨平台。
 
 **简单**：HTTP基本报文格式是header+body，头部信息也是key-value文本的形式，易于理解。
 
@@ -225,9 +221,7 @@ HTTP最突出的优点是简单、灵活、易于扩展、应用广泛和跨平�
 
 **应用广泛和跨平台**：浏览器、APP等。
 
-缺点：
-
-无状态、明文传输、不安全。
+缺点：无状态、明文传输、不安全。
 
 **无状态**：优点：服务器不会去记忆HTTP的状态，不需要额外的资源来记录状态信息，能减轻服务器的负担。缺点：没有记忆能力在完成一些关联操作时比较麻烦。（解决方案：比较简单的方式采用Cookie技术）
 
@@ -960,6 +954,41 @@ TIME_WAIT 等待 2 倍的 MSL，比较合理的解释是： 网络中可能存�
 
 <img src="./assets/format,png-20230309230545997.png" alt="基于 TCP 协议的客户端和服务端工作" style="zoom:50%;" />
 
+##### 如何修改socket缓冲区大小
+
+缓冲区：每个socket创建后，无论是使用TCP（会创建自己的接收缓冲区和发送缓冲区）还是UDP协议（只有接收缓冲区，没有发送缓冲区），当我们调用write()/send()向网络发送数据时系统并不会马上向网络传输数据，而是首先将数据拷贝至发送缓冲区，由系统负责择时发送数据。
+
+每个Socket在Linux中都映射为一个文件，并于内核中两个缓冲区（读缓冲区、写缓冲区）相关联。或者说每个Socket拥有两个内核缓冲区。
+
+1. 通过系统设置
+
+   ```shell
+   [jiang@localhost ~]$ cat /proc/sys/net/core/rmem_max
+   124928
+   [jiang@localhost ~]$ cat /proc/sys/net/core/wmem_max
+   124928
+   [jiang@localhost ~]$ cat /proc/sys/net/core/rmem_default
+   124928
+   [jiang@localhost ~]$ cat /proc/sys/net/core/wmem_default
+   124928
+   ```
+
+   rmem_max：一个Socket的读缓冲区可由程序设置的最大值，单位字节；
+   wmem_max：一个Socket的写缓冲区可由程序设置的最大值，单位字节；
+   rmem_default：一个Socket的被创建出来时，默认的读缓冲区大小，单位字节；
+   wmem_default：一个Socket的被创建出来时，默认的写缓冲区大小，单位字节；
+
+   ```shell
+   echo 262144 > /proc/sys/net/core/rmem_default
+   echo 1048576 > /proc/sys/net/core/rmem_max
+   ```
+
+2. 应用程序级修改缓冲区大小
+
+   ```cpp
+   setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &rcvBufSize, bufferlen)
+   ```
+
 ##### 针对TCP的Socket编程
 
 - 服务端和客户端初始化 `socket`，得到文件描述符；
@@ -985,6 +1014,8 @@ int listen (int socketfd, int backlog)
 
 - 参数一 socketfd 为 socketfd 文件描述符
 - 参数二 backlog，Accept 队列长度（上限值受内核参数somaxconn大小影响）
+
+
 
 ###### 没有accpet,能建立TCP连接吗
 
