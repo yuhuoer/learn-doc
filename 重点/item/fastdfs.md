@@ -207,9 +207,32 @@ Fastdfs作为分布式文件系统，主要功能是提供高容量的文件存�
 
 
 
+断点续传怎么实现：
 
 
 
+
+
+c++中怎么使用mysql
+
+安装mysql后在对应的文件加下有mysql的.h文件和静态库lib文件。在程序中创建mysql的句柄，调用对应的api就可以完成操作。
+
+```cpp
+MYSQL mysql;
+mysql_init(&mysql);
+mysql_real_connect(&mysql, "localhost", "root", "root", "test_mysql", 3306, nullptr, 0)
+mysql_real_query(&mysql, sql, (unsigned int)strlen(sql));
+mysql_free_result(res);
+mysql_close(&mysql);
+```
+
+
+
+redis怎么连接使用的
+
+使用hiredis库进行和redis进行连接的。
+
+fastdfs中redis做什么用
 
 
 
