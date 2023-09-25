@@ -62,7 +62,6 @@ public:
                 
             });
         }
-        
     }
     ~ThreadPool(){
         {
