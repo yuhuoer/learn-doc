@@ -2,15 +2,17 @@
 
 项目介绍：
 
-首先说明以下，fastdfs这个//Fastdfs是使用C语言编写的高性能分布式文件系统。
+功能+用途+实现
 
-用来对文件进行管理，功能包括文件同步，文件访问，解决大容量存储和负载均衡的问题。Fastdfs考虑了冗余备份，负载均衡，在线扩容等机制。fastdfs特别适合中小文件为载体的在线服务，如相册网站、视频网站、电商网站。客户端是使用QT进行设计，可以实现对文件的上传、下载和访问，同时也可以在客户端实现在线扩容。
+Fastdfs是使用C语言编写的高性能分布式文件系统。
+
+用来对文件进行管理，功能包括文件上传、下载、文件同步，文件访问，Fastdfs考虑了冗余备份，负载均衡，在线扩容等机制。fastdfs特别适合中小文件为载体的在线服务，如相册网站、视频网站、电商网站。客户端是使用QT进行设计，可以实现对文件的上传、下载和访问，同时也可以在客户端实现在线扩容。
 
 接下来讲一讲整体的设计思路：
 
 像其他的分布式文件系统一样，首先要有三个角色：Tracker跟踪者，用于负责协调作用，监控各个存储节点的状态，负责与客户端建立连接；Storage存储节点：用于真实存储数据；client客户端，用户用来上传下载文件使用。
 
-接下要考虑项目中的各个需求，根据需求来进行设计。为了实现冗余备份：将不同的存储节点分组，一个组内的多个存储节点存储相同的数据，起到相互备份的作用，这又需要设计不同节点进行数据同步的流程。在实际计算过程中，该组的实际容量为节点中容量最小的节点为准。为了实现在线扩容：就设计可以方便增加组的接口，节点上线后就主动和tracker连接并保持周期性心跳。为了实现负载均衡和http访问：引入nginx进行反向代理，不仅为文件系统增加了http访问的功能，还能进行负载均衡
+接下要考虑项目中的各个需求，根据需求来进行设计。为了实现冗余备份：将不同的存储节点分组，一个组内的多个存储节点存储相同的数据，起到相互备份的作用，这又需要设计不同节点进行数据同步的流程。在实际计算过程中，该组的实际容量为节点中容量最小的节点为准。为了实现在线扩容：就设计可以方便增加组的接口，节点上线后就主动和tracker连接并保持周期性心跳。为了实现负载均衡和http访问：引入nginx进行反向代理，不仅为文件系统增加了http访问的功能，还能进行负载均衡。
 
 
 
@@ -199,11 +201,17 @@ binlog同步过程：(增量同步)[https://blog.csdn.net/hfty290/article/detail
 
 
 
+项目是开源的还是自创的？
+
+项目本体是开源的，是为了学习分布式系统找的开源项目。自己也会去读底层源码实现，并在原项目基础上进行一些改进。
+
+原项目不支持断点续传，我自己优化相关部分实现了文件的断点续传以及秒传。
+
+原项目系统上的文件任意一个用户都可访问，我自己实现了用户表以及权限管理。
+
+原项目的负载均衡策略nginx自带的负载均衡策略，我实现了根据不同节点存储节点
+
 #### 如何实现断点续传
-
-
-
-
 
 秒传：将上传的内容先做一个MD5校验，如果数据库中有一样的内容，就直接返回一个新地址，不需要重新上传文件。
 
@@ -213,9 +221,16 @@ binlog同步过程：(增量同步)[https://blog.csdn.net/hfty290/article/detail
 
 
 
-断点续传：将大文件进行分片，每隔部分采用一个线程进行上传或下载，如果碰到网络故障，可以从已经上传或下载的部分开始继续上传或者 下载未完成的部分，而没有必要从头开始上传或下载。
+断点续传：
 
-
+1. 文件分割：客户端将文件分成固定大小的块，通常为数百KB或者数MB的大小。这些块可以是二进制块或者文本块，取决于应用程序的类型。
+2. 上传/下载：客户端开始上传或下载文件块，将他们发送到服务器或从服务器下载，客户端通常会使用HTTP或者FTP协议进行通信。
+3. 状态记录：客户端记录已完成的块，通常在本地存储状态信息，例如已完成的块编号或者字节范围。
+4. 服务器存储：服务器接收和存储已完成的块，并维护有关客户端的状态信息。服务器通常会为每个文件块创建唯一的标识符，以便在断点续传时区分他们。
+5. 中断处理：如果上传或者下载中断，客户端可以查找本地状态信息，确定未完成的块。并从上次中断的位置继续操作。
+6. 续传/继续下载：客户端根据状态信息从上次中断的位置继续上传或下载。如果服务器支持，客户端可以使用HTTP的`Range`头部请求特定字节范围的文件块。
+7. 完成处理：一旦所有块都上传或者下载完成，服务器将他们呢合并成完整的文件，并通知客户端操作已完成。
+8. 错误处理：客户端和服务器应该处理中断和错误情况，例如网络故障或者服务器崩溃，如果中断后无法继续操作，客户端和服务器可能需要清除未完成的数据。
 
 
 
@@ -281,9 +296,32 @@ Fastdfs作为分布式文件系统，主要功能是提供高容量的文件存�
 
    上传文件后存放在源存储节点，同一组节点之间的文件同步是异步进行的。如果还没完成同步就有一个新请求去访问这个文件，如果访问到同一组的其他节点上就会出现文件无法访问的错误。nginx可以在文件无法访问时重定向到文件存放的源存储节点，避免由于文件同步延迟带来的错误。  
 
+Nginx如何处理http请求
+
+Nginx采用多进程机制和异步非阻塞方式。
+
+1. 多进程机制
+
+   Nginx主进程为master进程，master进程管理worker进程：
+
+   - 接收来自外界的信号
+   - 向各worker进程发送信号
+   - 监控worker进程的运行状态
+   - 当worker进程异常退出后，会自动重新启动新的worker进程。
+
+   Nginx为什么采用多进程而不采用多线程结构：因为Nginx要保证高可用性，多线程之间会共享地址空间，当某个线程出现段错误会导致整个进程挂掉，而多进程模型不会出现这个问题。
+
+   为什么需要有多个worker进程：Nginx采用了事件驱动模型，希望能够高效利用整颗CPU，worker进程可以从头到尾沾满一颗CPU。
+
+2. 异步非阻塞机制
+
+   Nginx运用了epoll机制。当某个工作进程接收到客户端的请求以后，调用 IO 进行处理，如果不能立即得到结果，就去 处理其他请求 （即为 非阻塞 ）；而客户端在此期间也 无需等待响应 ，可以去处理其他事情（即为 异步 ）。（epoll从IO层面来看,epoll绝对是同步的；从消息处理层面来看，epoll是异步的.）
+
+
+
 ##### 使用方法
 
-tracker上有一个nginx反向代理服务器，nginx服务器存储各存储节点的nginx代理服务器地址。nginx配置文件中有几各后台存储节点就加几个`server `。
+tracker上有一个nginx反向代理服务器，nginx服务器存储各存储节点的nginx代理服务器地址。nginx配置文件中有几个后台存储节点就加几个`server `。
 
 在反向代理服务器中进行解析请求的文件ID(文件id由组名、存储目录、两级目录、文件名和文件后缀组成)，提取出文件的组名后找到对应组的地址配置，再根据负载均衡来转发至具体的节点。
 
@@ -411,6 +449,138 @@ upstream server_list
 
 
 
+#### Nginx反向代理策略
+
+负载均衡用于从`upstream`模块定义的后端服务器列表中选取一台服务器列表选取一台服务器接受用户的请求。
+
+```shell
+#动态服务器组 举例
+upstream dynamic_zuoyu {
+  server localhost:8080; #tomcat 7.0
+  server localhost:8081; #tomcat 8.0
+  server localhost:8082; #tomcat 8.5
+  server localhost:8083; #tomcat 9.0
+}
+```
+
+在`upstream`模块完成配置后，要让指定的访问反向代理服务器列表：
+
+```shell
+#其他页面反向代理到tomcat容器
+location ~ .*$ {
+  index index.jsp index.html;
+  proxy_pass http://dynamic_zuoyu;
+}
+```
+
+目前Nginx服务器的upstream支持6种方式的分配：
+
+1. 轮询
+
+   `upstream`默认的负载均衡策略。每个请求会按时间顺序逐一分配到不同的后端服务器。参数：
+
+   `fail_timeout`:与max_fails结合使用
+
+   `max_fails`：设置在`fail_timeout`参数设置的时间内最大失败次数，如果在这个时间内，所有针对该服务器的请求都失败了，那么认为服务器是停机了。
+
+   `fail_time`:服务器会被认为停机时间的默认事件长度，默认是10s。
+
+   `backup`:比较该服务器为备用服务器，当主服务器停止时，请求会发送到这里。
+
+   `down`：标记服务器被永久关机了。
+
+2. weight权重方式
+
+   权重方式，在轮询策略基础上指定轮询的几率。例：
+
+   ```shell
+   #动态服务器组
+   upstream dynamic_zuoyu {
+     server localhost:8080  weight=2; #tomcat 7.0
+     server localhost:8081; #tomcat 8.0
+     server localhost:8082  backup; #tomcat 8.5
+     server localhost:8083  max_fails=3 fail_timeout=20s; #tomcat 9.0
+   }
+   ```
+
+   该例子中，weight参数用于指定轮询几率，weight的默认值为1,；weight的数值与访问比率成正比，比如Tomcat 7.0被访问的几率为其他服务器的两倍。
+
+   权重越高分配需要处理的请求越多。
+
+   此策略可以与`least_conn`和`ip_hash`结合使用。
+
+   此策略比较适合服务器硬件配置差距较大的情况使用。
+
+3. ip_hash 依据ip进行分配
+
+   指定负载均衡按照基于客户端ip的分配方式，这个方法确保了相同的客户端的请求一直发送到相同的服务器，以保证session会话/这样每个访客都固定访问一个后端服务器，可以解决session不能跨服务器的问题。
+
+   ```shell
+   #动态服务器组
+     upstream dynamic_zuoyu {
+       ip_hash;  #保证每个访客固定访问一个后端服务器
+       server localhost:8080  weight=2; #tomcat 7.0
+       server localhost:8081; #tomcat 8.0
+       server localhost:8082; #tomcat 8.5
+       server localhost:8083  max_fails=3 fail_timeout=20s; #tomcat 9.0
+     }
+   ```
+
+   `ip_hash`不可以与`back_up`同时使用。
+
+   此策略适合有状态服务，比如session。
+
+   当有服务器需要剔除，需要手动down掉。
+
+4. least_conn 最少连接方式
+
+   把请求转发给连接数较少的后端服务器。轮询算法是把请求平均转发到后端服务器，使他们的负载大致相同，但有些请求占用事件很长，会导致其所在的后端负载较高。这种情况下可以搭配使用`least_conn`达到更好的负载均衡效果。
+
+   ```shell
+   #动态服务器组
+   upstream dynamic_zuoyu {
+     least_conn;  #把请求转发给连接数较少的后端服务器
+     server localhost:8080  weight=2; #tomcat 7.0
+     server localhost:8081; #tomcat 8.0
+     server localhost:8082 backup; #tomcat 8.5
+     server localhost:8083  max_fails=3 fail_timeout=20s; #tomcat 9.0
+   }
+   ```
+
+5. fair(第三方) 响应时间方式
+
+   根据服务器端的响应事件来分配请求，响应时间短的优先分配。
+
+   ```shell
+   #动态服务器组
+   upstream dynamic_zuoyu {
+     server localhost:8080; #tomcat 7.0
+     server localhost:8081; #tomcat 8.0
+     server localhost:8082; #tomcat 8.5
+     server localhost:8083; #tomcat 9.0
+     fair;  #实现响应时间短的优先分配
+   }
+   ```
+
+6. url_hash(第三方) 依据URL分配方式
+
+   按照url的hash结果来分配请求，使每个url定向到同一个后端服务器，要配合缓存命中率来使用。同一个资源多次请求，可能会到达不同的服务器上，导致不必要的多次下载，缓存命中率不高。使用`url_hash`可以使得同一个url(也就是同一个资源请求)达到同一台服务器，一旦缓存了该资源，再次受到请求就可以从缓存中读取。
+
+   ```shell
+   #动态服务器组
+   upstream dynamic_zuoyu {
+     hash $request_uri;  #实现每个url定向到同一个后端服务器
+     server localhost:8080; #tomcat 7.0
+     server localhost:8081; #tomcat 8.0
+     server localhost:8082; #tomcat 8.5
+     server localhost:8083; #tomcat 9.0
+   }
+   ```
+
+   
+
+
+
 #### 为什么要用FastCGI
 
 nginx是无法处理动态请求的，因此要将nginx和FastCGI进行搭配来实现动态请求的访问。
@@ -435,12 +605,13 @@ nginx对于动态请求转发至`localhost`的`FastCGI`端口号。
 安装mysql后在对应的文件加下有mysql的.h文件和静态库lib文件。在程序中创建mysql的句柄，调用对应的api就可以完成操作。
 
 ```cpp
-MYSQL mysql;
-mysql_init(&mysql);
-mysql_real_connect(&mysql, "localhost", "root", "root", "test_mysql", 3306, nullptr, 0)
-mysql_real_query(&mysql, sql, (unsigned int)strlen(sql));
-mysql_free_result(res);
-mysql_close(&mysql);
+MYSQL mysql;//初始化数据库
+mysql_init(&mysql);//设置字符编码
+mysql_real_connect(&mysql, "localhost", "root", "root", "test_mysql", 3306, nullptr, 0)//连接数据库
+int mysql_query(MYSQL *mysql, const char *query);//执行增删改查sql语句
+MYSQL_RES *mysql_store_result(MYSQL *mysql);//获取结果集
+void mysql_free_result(MYSQL_RES *result);//释放结果集
+void mysql_close(MYSQL *mysql);//关闭连接
 ```
 
 MySQL存储内容：
@@ -451,13 +622,17 @@ MySQL存储内容：
 
 
 
+
+
+
+
 #### redis怎么连接使用的
 
 使用hiredis库进行和redis进行连接的。
 
 数据是存储在存储节点的物理内存上，对于经常访问的文件，会以key-value形式存储在redis缓存中，key为文件的id，value为文件数据。文件存入时会用base64对文件进行编码后存入redis缓存中，提取后进行解码生成文件。
 
-周期性心跳如何实现的
+#### 周期性心跳如何实现的
 
 使用最小堆构建定时器，最小堆是一个完全二叉树，每一个节点的值总是小于等于它的子节点的值，堆中每个节点的子树都是最小堆。
 
